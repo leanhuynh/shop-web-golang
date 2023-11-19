@@ -1,0 +1,34 @@
+{{template "base" .}}
+
+{{define "title"}}
+    HomePage
+{{end}}
+
+{{define "content"}}
+
+{{/* logo */}}
+
+<h2>Login as admin</h2>
+
+<form action="/submit" method="post">
+    <div class="mb-3">
+        <input type="text" id="admin name" name="admin name" placeholder="Admin email" required>
+    </div>
+
+    <div class="mb-3">
+        <input type="text" id="admin password" name="admin password" placeholder="Admin password" required>
+    </div>
+
+    <div>
+        <h5>forgot password?</h5>
+    </div>
+
+    <button type="submit">Sign in</button>
+</form>
+
+<div>
+    Don't have an account?
+    <button class="btn-sign-up">Sign up</button>
+</div>
+
+{{end}}
