@@ -1,0 +1,17 @@
+create_table("Tag") {
+    t.Column("id", "integer", {primary: true})
+    t.Column("name", "varchar(256)", {"null": false})
+}
+
+sql("alter table Tag alter column created_at set default now();")
+sql("alter table Tag alter column updated_at set default now();")
+
+sql("insert into Tag (name) values ('Vivamus');")
+sql("insert into Tag (name) values ('Phasellus');")
+sql("insert into Tag (name) values ('pulvinar');")
+sql("insert into Tag (name) values ('Curabitur');")
+sql("insert into Tag (name) values ('Sem quis');")
+sql("insert into Tag (name) values ('Mollis metus');")
+sql("insert into Tag (name) values ('Sit amet');")
+sql("insert into Tag (name) values ('Vel posuere');")
+sql("insert into Tag (name) values ('orci luctus');")

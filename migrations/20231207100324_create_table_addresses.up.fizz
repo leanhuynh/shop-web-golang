@@ -1,0 +1,22 @@
+create_table("Address") {
+    t.Column("id", "integer", {primary: true})
+    t.Column("user_id", "integer", {"null": false})
+    t.Column("first_name", "varchar(256)", {})
+    t.Column("last_name", "varchar(256)", {})
+    t.Column("email", "varchar(256)", {})
+    t.Column("mobile", "varchar(256)", {})
+    t.Column("address", "varchar(256)", {})
+    t.Column("country", "varchar(256)", {})
+    t.Column("city", "varchar(256)", {})
+    t.Column("state", "varchar(256)", {})
+    t.Column("zip_code", "varchar(256)", {})
+    t.Column("is_default", "boolean", {"default": false})
+}
+
+sql("alter table Address alter column created_at set default now();")
+sql("alter table Address alter column updated_at set default now();")
+
+add_foreign_key("Address", "user_id", {"User": ["id"]}, {
+    "on_delete": "CASCADE",
+    "on_update": "CASCADE",
+})

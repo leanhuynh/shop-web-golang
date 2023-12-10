@@ -1,0 +1,29 @@
+create_table("Image") {
+    t.Column("name", "varchar(256)", {})
+    t.Column("image_path", "varchar(256)", {"null": false})
+    t.Column("product_id", "integer", {"null": false})
+}
+
+sql("alter table Image alter column created_at set default now();")
+sql("alter table Image alter column updated_at set default now();")
+
+add_foreign_key("Image", "product_id", {"Product": ["id"]}, {
+    "on_delete": "CASCADE",
+    "on_update": "CASCADE",
+})
+
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-9.png', 1);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-7.png', 1);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-6.png', 1);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-8.png', 2);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-5.png', 3);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-3.png', 3);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-1.png', 3);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-1.png', 4);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-2.png', 4);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-5.png', 4);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-6.png', 5);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-8.png', 5);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-4.png', 6);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-9.png', 6);")
+sql("insert into Image (name, image_path, product_id) values ('diam nam', '/static/img/product-1.png', 7);")

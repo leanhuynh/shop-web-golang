@@ -1,0 +1,14 @@
+create_table("User") {
+    t.Column("id", "integer", {primary: true})
+    t.Column("first_name", "varchar(256)", {"null": false})
+    t.Column("last_name", "varchar(256)", {"null": false})
+    t.Column("mobile", "varchar(256)", {"null": false})
+    t.Column("email", "varchar(256)", {"null": false})
+    t.Column("password", "varchar(256)", {"null": false})
+    t.Column("is_admin", "boolean", {"null": false, "default": false})
+}
+
+sql("alter table User alter column created_at set default now();")
+sql("alter table User alter column updated_at set default now();")
+
+sql("insert into User(id, first_name, last_name, mobile, email, password, is_admin) values (1, 'An', 'Le Huynh', '0971031912', 'leanhuynh2002@gmail.com', '$2a$12$VR1wDmweaF3ZTVgEHiJrNOSi8VcS4j0eamr96A/7iOe8vlum3O3/q', true);")

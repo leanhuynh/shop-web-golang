@@ -1,0 +1,13 @@
+create_table("Category") {
+    t.Column("id", "integer", {primary: true})
+    t.Column("name", "varchar(256)", {})
+    t.Column("image_path", "varchar(256)", {})
+}
+
+sql("alter table Category alter column created_at set default now();")
+sql("alter table Category alter column updated_at set default now();")
+
+sql("insert into Category (name, image_path) values ('Girls', '/static/img/category-1.jpg');")
+sql("insert into Category (name, image_path) values ('Kids', '/static/img/category-2.jpg');")
+sql("insert into Category (name, image_path) values ('Women', '/static/img/category-3.jpg');")
+sql("insert into Category (name, image_path) values ('Men', '/static/img/category-4.jpg');")

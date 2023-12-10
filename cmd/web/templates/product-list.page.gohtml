@@ -1,0 +1,81 @@
+{{template "base" .}}
+
+{{define "body"}}
+<!-- Breadcrumb Start -->
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="#">Products</a></li>
+            <li class="breadcrumb-item active">product list</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+
+<!-- Product List Start -->
+<div class="product-view">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-9">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="product-search">
+                                    <form action="/products" method="GET">
+                                    <input type="text" placeholder="Search" name="keyword" required>
+                                    <button><i class="fa fa-search"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="product-short">
+                                    <div class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Product short by {{index .Data "Sort"}}</a>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            {{$OriginalUrl := index .Data "OriginalUrl"}}
+                                            <a href="{{$OriginalUrl}}sort=price" class="dropdown-item">Price</a>
+                                            <a href="{{$OriginalUrl}}sort=newest" class="dropdown-item">Newest</a>
+                                            <a href="{{$OriginalUrl}}sort=popular" class="dropdown-item">Popular</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{range index .Data "ProductList"}}
+                    <div class="col-lg-4">
+                        {{template "product" .}}
+                    </div>
+                    {{end}}
+                </div>
+
+                <div class="col-lg-12">
+                    <nav aria-label="Page navigation example" id="pagination">
+                        {{/* {{{createPagination pagination paginationClass="pagination justify-content-center" leftText="Previous" rightText="Next"}}} */}}
+                    </nav>
+                </div>
+            </div>
+            
+            {{template "right-column" .}}
+        </div>
+    </div>
+</div>
+<!-- Product List End -->
+
+{{end}}
+
+{{define "js"}}
+<script>
+    document.querySelectorAll("#pagination li").forEach((li, index) => {
+        li.classList.add('page-item');
+    });
+
+    document.querySelectorAll("#pagination a").forEach(a => {
+        a.classList.add('page-link');
+    })
+</script>
+
+{{end}}

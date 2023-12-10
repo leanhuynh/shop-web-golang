@@ -1,0 +1,18 @@
+create_table("ProductTag") {
+    t.Column("tag_id", "integer", {"null": false})
+    t.Column("product_id", "integer", {"null": false})
+}
+
+sql("alter table ProductTag alter column created_at set default now();")
+sql("alter table ProductTag alter column updated_at set default now();")
+
+add_foreign_key("ProductTag", "tag_id", {"Tag": ["id"]}, {
+    "on_delete": "CASCADE",
+    "on_update": "CASCADE",
+})
+
+sql("insert into ProductTag (tag_id, product_id) values (1, 2);")
+sql("insert into ProductTag (tag_id, product_id) values (2, 1);")
+sql("insert into ProductTag (tag_id, product_id) values (3, 4);")
+sql("insert into ProductTag (tag_id, product_id) values (4, 3);")
+sql("insert into ProductTag (tag_id, product_id) values (1, 5);")

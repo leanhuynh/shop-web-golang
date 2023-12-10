@@ -1,0 +1,16 @@
+create_table("Brand") {
+    t.Column("id", "integer", {primary: true})
+    t.Column("name", "varchar(256)", {"null": false})
+    t.Column("image_path", "varchar(256)", {})
+}
+
+sql("alter table Brand alter column created_at set default now();")
+sql("alter table Brand alter column updated_at set default now();")
+
+
+sql("insert into Brand (name, image_path) values ('Quintiles', '/static/img/brand-1.png');")
+sql("insert into Brand (name, image_path) values ('IndiaCapital', '/static/img/brand-2.png');")
+sql("insert into Brand (name, image_path) values ('PaperlinX', '/static/img/brand-3.png');")
+sql("insert into Brand (name, image_path) values ('InfraRed', '/static/img/brand-4.png');")
+sql("insert into Brand (name, image_path) values ('Erlang', '/static/img/brand-5.png');")
+sql("insert into Brand (name, image_path) values ('Sport England', '/static/img/brand-6.png');")

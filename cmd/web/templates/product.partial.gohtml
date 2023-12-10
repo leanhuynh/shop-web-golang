@@ -1,0 +1,19 @@
+{{define "product"}}
+<div class="product-item">
+    <div class="product-image">
+        <a href="/products/{{.ID}}">
+            <img src="{{.ImagePath}}" alt="{{.Name}}">
+        </a>
+        <div class="product-action">
+            <a onclick="addCart({{.ID}}, 1)"><i class="fa fa-cart-plus"></i></a>
+            <a href="#"><i class="fa fa-heart"></i></a>
+            <a href="#"><i class="fa fa-search"></i></a>
+        </div>
+    </div>
+    <div class="product-content">
+        <div class="title"><a href="/products/{{.ID}}">{{.Name}}</a></div>
+            {{/* {{{createStarList stars}}} */}}
+        <div class="price">{{.Price}} <span>{{.OldPrice}}</span></div>
+    </div>
+</div>
+{{end}}
