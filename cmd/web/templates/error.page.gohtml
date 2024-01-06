@@ -1,10 +1,16 @@
-{{template "error" }}
+{{template "base" }}
+
+{{define "title" }}
+    Not found page
+{{end}}
+
+{{define "body" }}
 <div class="featured-product">
     <div class="container">
         <div class="section-header">
             <h3>Message</h3>
             <p class="alert alert-warning">
-                {{{message}}}
+                Page not found
             </p>
         </div>
     </div>

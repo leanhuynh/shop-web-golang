@@ -6,8 +6,8 @@
 <div class="breadcrumb-wrap">
     <div class="container">
         <ul class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item"><a href="/products">Products</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000">Home</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000/products">Products</a></li>
             <li class="breadcrumb-item active">Cart</li>
         </ul>
     </div>
@@ -18,7 +18,7 @@
 <!-- Cart Start -->
 {{/* {{with index .Data "Cart"}} */}}
 <div class="cart-page">
-    <div class="container">
+    <div id="cart" class="container">
         {{$CartProducts := index .Data "CartProducts"}}
         {{if $CartProducts}}
         {{with $CartProducts}}
@@ -50,7 +50,7 @@
                                     </div>
                                 </td>
                                 <td id="total{{.ID}}">{{.Total}}</td>
-                                <td><button onclick="removeCart({{.ID}})"><i class="fa fa-trash"></i></button></td>
+                                <td><button onclick="removeCart({{.ID}}).then(loadcartquantity).then(loadcart)"><i class="fa fa-trash"></i></button></td>
                             </tr>
                             {{end}}
                         </tbody>
@@ -91,4 +91,10 @@
 {{/* {{end}} */}}
 <!-- Cart End -->
 
+{{end}}
+
+{{define "js" }}
+    <script>
+        loadcart();
+    </script>
 {{end}}

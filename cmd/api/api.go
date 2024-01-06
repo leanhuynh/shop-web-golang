@@ -9,9 +9,13 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/alexedwards/scs/v2"
 )
 
 const version = "1.0.0"
+
+var session *scs.SessionManager
 
 type config struct {
 	port int
@@ -23,6 +27,14 @@ type config struct {
 		secret string
 		key    string
 	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+	}
+	secretkey string
+	frontend  string
 }
 
 type application struct {
@@ -31,6 +43,7 @@ type application struct {
 	errorLog *log.Logger
 	version  string
 	DB       models.DBModel
+	Session  *scs.SessionManager
 }
 
 func (app *application) serve() error {
@@ -54,11 +67,17 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 4001, "Server port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "Application environment {development|production|maintenance}")
 	flag.StringVar(&cfg.db.dsn, "dsn", "root@tcp(localhost:3306)/go_stripe?parseTime=true&tls=false", "DSN")
+	flag.StringVar(&cfg.smtp.host, "smtphost", "smtp.mailtrap.io", "smtp host")
+	flag.StringVar(&cfg.smtp.username, "smtpuser", "dc8f045580cde0", "smtp user")
+	flag.StringVar(&cfg.smtp.password, "smtppass", "7810f125ae27ba", "smtp password")
+	flag.IntVar(&cfg.smtp.port, "smtpport", 587, "smtp port")
+	flag.StringVar(&cfg.secretkey, "secret", "secret", "secret key")
+	flag.StringVar(&cfg.frontend, "frontend", "http://localhost:4000", "url to front end")
 
 	flag.Parse()
 
-	cfg.stripe.key = os.Getenv("STRIPE_KEY")
-	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
+	// cfg.stripe.key = os.Getenv("STRIPE_KEY")
+	// cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
@@ -70,16 +89,22 @@ func main() {
 	}
 	defer conn.Close()
 
+	// set up session
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+
 	app := &application{
 		config:   cfg,
 		infoLog:  infoLog,
 		errorLog: errorLog,
 		version:  version,
 		DB:       models.DBModel{DB: conn},
+		Session:  session,
 	}
 
 	err = app.serve()
 	if err != nil {
+		app.errorLog.Println(err)
 		log.Fatal(err)
 	}
 }

@@ -1,0 +1,17 @@
+create_table("Token") {
+  t.Column("id", "integer", {primary: true})
+  t.Column("user_id", "integer", {"null": false})
+  t.Column("first_name", "varchar(256)", {})
+  t.Column("last_name", "varchar(256)", {})
+  t.Column("email", "varchar(256)", {})
+  t.Column("token_hash", "varbinary(256)", {})
+  t.Column("expiry", "timestamp", {})
+}
+
+sql("alter table Token alter column created_at set default now();")
+sql("alter table Token alter column updated_at set default now();")
+
+add_foreign_key("Token", "user_id", {"User": ["id"]}, {
+    "on_delete": "CASCADE",
+    "on_update": "CASCADE",
+})

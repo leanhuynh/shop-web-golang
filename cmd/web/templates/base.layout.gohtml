@@ -20,13 +20,17 @@
         <link href="/static/lib/slick/slick.css" rel="stylesheet">
         <link href="/static/lib/slick/slick-theme.css" rel="stylesheet">
 
+        {{block "in-head" .}}
+
+        {{end}}
+
         <!-- Template Stylesheet -->
         <link href="/static/css/styles.css" rel="stylesheet">
     </head>
 
     <body>
         <!-- Top Header Start -->
-        <div class="top-header">
+        <div class="top-header">    
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-md-3">
@@ -38,22 +42,22 @@
                     </div>
                     <div class="col-md-6">
                         <div class="search">
-                            <input type="text" placeholder="Search">
-                            <button><i class="fa fa-search"></i></button>
+                            <input id="search" type="text" placeholder="product name">
+                            <button onclick="search()"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="user">
                             <div class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">My Account</a>
-                                <div class="dropdown-menu">
-                                    <a href="#" class="dropdown-item">Login</a>
-                                    <a href="#" class="dropdown-item">Register</a>
+                                <div id = "dropdown-account" class="dropdown-menu">
+                                    <a href="/login" class="dropdown-item">Login</a>
+                                    <a href="/register" class="dropdown-item">Register</a>
                                 </div>
                             </div>
                             <div class="cart">
                                 <a href="/products/cart"><i class="fa fa-cart-plus"></i>
-                                <span id="cart-quantity">{{index .IntMap "Quantity"}}</span>
+                                    <span id="cart-quantity"></span>
                                 </a>
                             </div>
                         </div>
@@ -77,7 +81,7 @@
                         <div class="navbar-nav m-auto">
                             <a href="/" class="nav-item nav-link active">Home</a>
                             <a href="/products" class="nav-item nav-link">Products</a>
-                            <div class="nav-item dropdown">
+                            {{/* <div class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Pages</a>
                                 <div class="dropdown-menu">
                                     <a href="/products" class="dropdown-item">Product</a>
@@ -88,7 +92,7 @@
                                     <a href="/login" class="dropdown-item">Login & Register</a>
                                     <a href="/my-account" class="dropdown-item">My Account</a>
                                 </div>
-                            </div>
+                            </div> */}}
                             <a href="/contact" class="nav-item nav-link">Contact Us</a>
                         </div>
                     </div>
@@ -213,6 +217,181 @@
         <!-- Template Javascript -->
         <script src="/static/js/main.js"></script>
         <script src="/static/js/20120028.js"></script>
+
+        <script>
+        // get element of dropdown menu
+        let dropdown_account = document.getElementById("dropdown-account")
+
+        // add function to update dropdown menu if user is logged or not logged
+        document.addEventListener("DOMContentLoaded", function() {
+            // if user is logged
+            if (localStorage.getItem("token") !== null) {
+                // include profile page and logout
+                dropdown_account.innerHTML = `<a href="/users/profile" class="dropdown-item">Profile</a>
+                                    <a class="dropdown-item" onclick="logout()">Logout</a>`;
+            } // or not logged
+            else {
+                dropdown_account.innerHTML = `<a href="/login" class="dropdown-item">Login</a>
+                                    <a href="/register" class="dropdown-item">Register</a>`;
+            }
+
+            loadcartquantity();
+        })
+
+        // function logout() to remove localstorage (token, token_expiry)
+        async function logout() {
+            {{/* let payLoad = {
+                Token: localStorage.getItem("token"),
+            } */}}
+
+            // gui token den server de xoa token trong database
+            {{/* const requestOptions = {
+                method: 'post',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payLoad),
+            } */}}
+
+            // gui request to server
+            {{/* let status;
+            const res = await fetch("http://localhost:4001/api/users/logout", requestOptions)
+            .then(response => {
+                status = response.status
+                return response.json()
+            })
+            console.log(res)
+            showNotification(res.message); */}}
+
+            // neu logged out, remove token va chuyen trang web den trang chu
+            {{/* if (status == 200) { */}}
+                localStorage.removeItem("token");
+                localStorage.removeItem("token_expiry");
+                window.location.href = "http://localhost:4000";
+            {{/* } */}}
+        }
+
+        // function to show notification
+        function showNotification(message) {
+            alert(message);
+        }
+
+
+        // function to check if user if logged
+        // if logged, there is existed token
+        // or not, no token and will send user to login page
+        {{/* async function checkAuth() {
+            // lay token trong localStorage,
+            // neu khong co thi chuyen den trang login
+            if (localStorage.getItem("token") === null) {
+                window.location.href = "/login";
+                return
+            } else {
+                // create a Header object
+                let token = localStorage.getItem("token");
+                let myHeaders = new Headers();
+                myHeaders.append("Content-Type", "application/json");
+                myHeaders.append("Authentication", "Bearer " + token);
+
+                // create a request 
+                const requestOptions = {
+                method: "post",
+                headers: myHeaders,
+                }
+
+                // send a request
+                let status;
+                const res = await fetch("http://localhost:4001/api/is-authenticated", requestOptions)
+                .then(response => {
+                    status = response.status;
+                    return response.json();
+                });
+
+                console.log(status)
+                console.log(res)
+                
+                if (status != 200) {
+                    showNotification("authenticate token is failed");
+                    window.location.href = "http://localhost:4000/login";
+                }
+            }
+        } */}}
+
+        function checkAuth() {
+            if (localStorage.getItem("token") === null) {
+                location.href = "/login";
+                return;
+            } else {
+            let token = localStorage.getItem("token");
+                const myHeaders = new Headers();
+                myHeaders.append("Content-Type", "application/json");
+                myHeaders.append("Authorization", "Bearer " + token);
+
+                const requestOptions = {
+                    method: "POST",
+                    headers: myHeaders,
+                }
+
+                let status;
+                fetch("http://localhost:4001/api/is-authenticated", requestOptions)
+                .then(response => {
+                    status = response.status;
+                    return response.json();
+                })
+                .then(function(data){
+                    
+                    // neu authenticate token khong thanh cong
+                    // xoa token trong localStorage
+                    if (status !== 200) {
+                        logout();
+                        location.href = "/login";
+                    }
+                })
+            }
+        }
+
+        // ham search product theo keyword
+        async function search() {
+            const search = document.getElementById('search');
+            window.location.href="/products?search=" + search.value;
+        }
+
+        {{/* async function loadcartquantity() {
+            // get information
+            const token = localStorage.getItem("token");
+            const cart_quantity = document.getElementById("cart-quantity");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer " + token);
+            
+            const requestOptions = {
+                method: "Get",
+                headers: myHeaders,
+            }
+
+            const res = await fetch("http://localhost:4001/api/cart", requestOptions)
+            .then(response => {
+                return response.json();
+            })
+
+            console.log(res)
+            
+            var quantity = 0;
+            if (res.cart != null) {
+                for (var cart of res.cart) {
+                    quantity += parseInt(cart.quantity);
+                }
+            }
+            cart_quantity.textContent = quantity;
+        } */}}
+
+    </script>
+
+        {{block "js" .}}
+
+        {{end}}
     </body>
 </html>
 

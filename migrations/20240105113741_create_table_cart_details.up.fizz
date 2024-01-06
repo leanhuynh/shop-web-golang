@@ -1,0 +1,20 @@
+create_table("CartDetail") {
+    t.Column("user_id", "integer", {"null": false})
+    t.Column("product_id", "integer", {"null": false})
+    t.Column("quantity", "integer", {"null": false})
+    t.Column("price", "decimal(10, 3)", {"null": false})
+    t.Column("total", "decimal(10, 3)", {"null": false})
+}
+
+sql("alter table CartDetail alter column created_at set default now();")
+sql("alter table CartDetail alter column updated_at set default now();")
+
+add_foreign_key("CartDetail", "user_id", {"User": ["id"]}, {
+    "on_delete": "CASCADE",
+    "on_update": "CASCADE",
+})
+
+add_foreign_key("CartDetail", "product_id", {"Product": ["id"]}, {
+    "on_delete": "CASCADE",
+    "on_update": "CASCADE",
+})

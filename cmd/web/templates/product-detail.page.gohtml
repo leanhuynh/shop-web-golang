@@ -5,8 +5,8 @@
 <div class="breadcrumb-wrap">
     <div class="container">
         <ul class="breadcrumb">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item"><a href="#">Products</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000">Home</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000/products">Products</a></li>
             <li class="breadcrumb-item active">product details</li>
         </ul>
     </div>
@@ -51,7 +51,7 @@
                                 </div>
                             </div>
                             <div class="action">
-                                <a onclick="addCart({{$ProductInfo.ID}}, parseInt(document.getElementById('quantity').value))"><i class="fa fa-cart-plus"></i></a>
+                                <a onclick="addCart({{$ProductInfo.ID}}, parseInt(document.getElementById('quantity').value), loadcartquantity)"><i class="fa fa-cart-plus"></i></a>
                                 <a href="#"><i class="fa fa-heart"></i></a>
                                 <a href="#"><i class="fa fa-search"></i></a>
                             </div>
@@ -151,4 +151,10 @@
 </div>
 <!-- Product Detail End -->
 
+{{end}}
+
+{{define "js" }}
+    <script>
+        checkAuth();
+    </script>
 {{end}}

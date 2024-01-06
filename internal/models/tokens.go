@@ -1,6 +1,11 @@
 package models
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base32"
+	"fmt"
 	"time"
 )
 
@@ -18,84 +23,81 @@ type Token struct {
 }
 
 // GenerateToken generates a token that lasts for ttl, and returns it
-// func GenerateToken(userID int, ttl time.Duration, scope string) (*Token, error) {
-// 	token := &Token{
-// 		UserID: int64(userID),
-// 		Expiry: time.Now().Add(ttl),
-// 		Scope:  scope,
-// 	}
+func GenerateToken(userID int, ttl time.Duration, scope string) (*Token, error) {
+	token := &Token{
+		UserID: int64(userID),
+		Expiry: time.Now().Add(ttl),
+		Scope:  scope,
+	}
 
-// 	randomBytes := make([]byte, 16)
-// 	_, err := rand.Read(randomBytes)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return nil, err
+	}
 
-// 	token.PlainText = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
-// 	hash := sha256.Sum256(([]byte(token.PlainText)))
-// 	token.Hash = hash[:]
-// 	return token, nil
-// }
+	token.PlainText = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
 
-// func (m *DBModel) InsertToken(t *Token, u User) error {
-// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-// 	defer cancel()
+	hash := sha256.Sum256(([]byte(token.PlainText)))
+	token.Hash = hash[:]
+	return token, nil
+}
 
-// 	// delete existing tokens
-// 	stmt := `delete from token where userId = ?`
-// 	_, err := m.DB.ExecContext(ctx, stmt, u.ID)
-// 	if err != nil {
-// 		return err
-// 	}
+func (m *DBModel) InsertToken(t *Token, u User) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-// 	stmt = `insert into token (userId, name, email, tokenHash, expiry, created_at, updated_at)
-// 			values (?, ?, ?, ?, ?, ?, ?)`
+	// delete existing tokens
+	stmt := `delete from token where user_id = ?`
+	_, err := m.DB.ExecContext(ctx, stmt, u.ID)
+	if err != nil {
+		return err
+	}
 
-// 	_, err = m.DB.ExecContext(ctx, stmt,
-// 		u.ID,
-// 		u.Name,
-// 		u.Email,
-// 		t.Hash,
-// 		t.Expiry,
-// 		time.Now(),
-// 		time.Now(),
-// 	)
+	stmt = `insert into token (user_id, first_name, last_name, email, token_hash, expiry)
+			values (?, ?, ?, ?, ?, ?)`
 
-// 	if err != nil {
-// 		return err
-// 	}
+	_, err = m.DB.ExecContext(ctx, stmt,
+		u.ID,
+		u.FirstName,
+		u.LastName,
+		u.Email,
+		t.Hash,
+		t.Expiry,
+	)
 
-// 	return nil
-// }
+	if err != nil {
+		return err
+	}
 
-// func (m *DBModel) GetUserForToken(token string) (*User, error) {
-// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-// 	defer cancel()
+	return nil
+}
 
-// 	tokenHash := sha256.Sum256([]byte(token))
-// 	var user User
+func (m *DBModel) GetUserForToken(token string) (*User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-// 	query := `
-// 		select
-// 			u.id, u.first_name, u.last_name, u.email
-// 		from
-// 			users u
-// 			inner join tokens t on (u.id = t.user_id)
-// 		where
-// 			t.token_hash = ?
-// 			and t.expiry > ?
-// 	`
+	tokenHash := sha256.Sum256([]byte(token))
 
-// 	err := m.DB.QueryRowContext(ctx, query, tokenHash[:], time.Now()).Scan(
-// 		&user.ID,
-// 		&user.Name,
-// 		&user.Email,
-// 	)
+	var user User
+	stmt := `select t1.id, t1.first_name, t1.last_name, t1.email, t1.password, t1.is_admin 
+	from User t1 inner join token t2
+	on (t1.id = t2.user_id)
+	where t2.token_hash = ? and t2.expiry > ?`
+	row := m.DB.QueryRowContext(ctx, stmt, tokenHash[:], time.Now())
+	err := row.Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Password,
+		&user.IsAdmin,
+	)
 
-// 	if err != nil {
-// 		log.Println(err)
-// 		return nil, err
-// 	}
+	if err != nil {
+		fmt.Println("not found")
+		return nil, err
+	}
 
-// 	return &user, nil
-// }
+	return &user, nil
+}

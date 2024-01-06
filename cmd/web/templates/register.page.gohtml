@@ -1,0 +1,103 @@
+{{template "base" .}}
+
+{{define "title"}}
+    Sign In
+{{end}}
+
+{{define "body"}}
+<!-- Breadcrumb Start -->
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="http://localhost:4000">Home</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000/users/profile">User</a></li>
+            <li class="breadcrumb-item active">Register & Login</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+
+<!-- Login Start -->
+<div class="login">
+    <div class="container">
+        <div class="section-header">
+            <h3>User Registration</h3>
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec viverra at massa sit amet ultricies.
+                Nullam consequat, mauris non interdum cursus
+            </p>
+        </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>First Name</label>
+                    <input id = "firstname" class="form-control" type="text" placeholder="First Name" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Last Name</label>
+                    <input id = "lastname" class="form-control" type="text" placeholder="Last Name" required>
+                </div>
+                <div class="col-md-6">
+                    <label>E-mail</label>
+                    <input id = "email" class="form-control" type="text" placeholder="E-mail" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Pasword</label>
+                    <input id = "password" class="form-control" type="text" placeholder="Password" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Mobile No</label>
+                    <input id = "mobile" class="form-control" type="text" placeholder="Mobile" required>
+                </div>
+                <div class="col-md-12">
+                    <button onclick="register()" class="btn">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Login End -->
+{{end}}
+
+{{define "js"}} 
+<script>
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const firstname = document.getElementById("firstname");
+    const lastname = document.getElementById("lastname");
+    const mobile = document.getElementById("mobile");
+
+    async function register() {
+        // check if input information is correct form
+        
+        let payload = {
+            FirstName: firstname.value,
+            LastName: lastname.value,
+            Email: email.value,
+            Password: password.value,
+            Mobile: mobile.value,
+        }
+
+        const requestOptions = {
+            method: 'put',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+        }
+
+        let status 
+        const res = await fetch("http://localhost:4001/api/register", requestOptions)
+        .then(response => {
+            status = response.status
+            return response.json()
+        })
+
+        showNotification(res.message)
+        if (status == 200) {
+            window.location.href = "http://localhost:4000/login";   
+        }
+    }
+</script>
+{{end}}

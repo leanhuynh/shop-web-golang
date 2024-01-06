@@ -26,6 +26,55 @@ type templateData struct {
 var functions = template.FuncMap{
 	"formatCurrency":    formatCurrency,
 	"getSizeOfProducts": getSizeOfProducts,
+	"pagination":        pagination,
+}
+
+func pagination(currentpage int, pagesize int) template.HTML {
+	html := ""
+	// previous button
+	// vd: pre 1 2 nex
+	if currentpage-1 > 0 {
+		html += fmt.Sprintf(`<li onclick="previous(%d)" class="page-item">
+                                <a class="page-link">Previous</a>
+                            </li>`, currentpage)
+	} else {
+		html += `<li class="page-item disabled">
+                                <a class="page-link">Previous</a>
+				</li>`
+	}
+
+	// currentpage - 1
+	if currentpage-1 >= 1 {
+		html += fmt.Sprintf(`<li onclick="previous(%d)" class="page-item">
+                                    <a class="page-link">%d</a>
+                                </li>`, currentpage, currentpage-1)
+	}
+
+	// currentpage
+	html += fmt.Sprintf(`<li class="page-item active">
+                                <a class="page-link">%d</a>
+						</li>`, currentpage)
+
+	// current page + 1
+	if currentpage+1 <= pagesize {
+		html += fmt.Sprintf(`<li onclick="next(%d, %d)" class="page-item">
+								<a class="page-link">%d</a>
+							</li>`, currentpage, pagesize, currentpage+1)
+	}
+
+	// Next
+	// pre 2 3 nex
+	if currentpage+1 <= pagesize {
+		html += fmt.Sprintf(`<li onclick="next(%d, %d)" class="page-item">
+                                    <a class="page-link">Next</a>
+				</li>`, currentpage, pagesize)
+	} else if currentpage+1 > pagesize {
+		html += `<li class="page-item disabled">
+					<a class="page-link">Next</a>
+				</li>`
+	}
+
+	return template.HTML(html)
 }
 
 func formatCurrency(n int) string {
@@ -45,8 +94,6 @@ func getSizeOfProducts(products []string) bool {
 var templateFS embed.FS
 
 func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
-	td.IntMap = make(map[string]int)
-	td.IntMap["Quantity"] = 0
 	td.API = app.config.api
 	td.StripeSecretKey = app.config.stripe.secret
 	td.StripePublishableKey = app.config.stripe.key

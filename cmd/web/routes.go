@@ -9,32 +9,30 @@ import (
 func (app *application) routes() http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(SessionLoad)
-	mux.Use(InitCart)
+	// mux.Use(InitCart)
 
-	mux.Get("/", app.HomePage)
-	// mux.Get("/checkout", app.CheckOut)
-	// mux.Get("/contact", app.Contact)
-	// mux.Get("/login", app.LogIn)
-	// mux.Get("/my-account", app.ShowAccount)
-	// mux.Route("/product", func(r chi.Router) {
-	// 	mux.Get("/{productId}", app.ShowProduct)
-	// })
-
-	// mux.Route("/users", func(mux chi.Router) {
-	// 	mux.Get("/checkout", app.CheckOut)
-	// 	mux.Post("/placeorders", app.PlaceOrders)
-	// })
+	mux.Route("/", func(mux chi.Router) {
+		mux.Get("/", app.HomePage)
+		mux.Get("/register", app.Register)
+		mux.Get("/login", app.Login)
+		mux.Get("/forgot-password", app.ForgotPassword)
+		mux.Get("/reset-password", app.ResetPassword)
+		mux.Get("/contact", app.Contact)
+	})
 
 	mux.Route("/products", func(mux chi.Router) {
 		mux.Get("/", app.ShowProduct)
 		mux.Get("/cart", app.ShowCart)
 		mux.Get("/{product_id}", app.ShowProductDetail)
-		mux.Post("/cart", app.AddCart)
-		// mux.Post("/cart", app.AddCart)
-		// mux.Put("/cart", app.UpdateCart)
-		// mux.Delete("/cart", app.RemoveProduct)
-		// mux.Delete("/cart/all", app.ClearCart)
 	})
+
+	mux.Route("/users", func(mux chi.Router) {
+		mux.Get("/checkout", app.CheckOut)
+		// mux.Get("/checkout/card", app.ChargeCard)
+		mux.Get("/profile", app.Profile)
+	})
+
+	mux.NotFound(app.ErrorPage)
 
 	fileServer := http.FileServer(http.Dir("./static"))
 	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))

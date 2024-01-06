@@ -1,12 +1,16 @@
 {{template "base" .}}
 
+{{define "title" }}
+    Product Detail
+{{end}}
+
 {{define "body"}}
 <!-- Breadcrumb Start -->
 <div class="breadcrumb-wrap">
     <div class="container">
         <ul class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item"><a href="#">Products</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000">Home</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000/products">Products</a></li>
             <li class="breadcrumb-item active">product list</li>
         </ul>
     </div>
@@ -22,14 +26,14 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="row">
-                            <div class="col-md-8">
+                            {{/* <div class="col-md-8">
                                 <div class="product-search">
                                     <form action="/products" method="GET">
                                     <input type="text" placeholder="Search" name="keyword" required>
                                     <button><i class="fa fa-search"></i></button>
                                     </form>
                                 </div>
-                            </div>
+                            </div> */}}
                             <div class="col-md-4">
                                 <div class="product-short">
                                     <div class="dropdown">
@@ -53,8 +57,12 @@
                 </div>
 
                 <div class="col-lg-12">
-                    <nav aria-label="Page navigation example" id="pagination">
-                        {{/* {{{createPagination pagination paginationClass="pagination justify-content-center" leftText="Previous" rightText="Next"}}} */}}
+                    <nav>
+                        {{$CurrentPage := index .Data "CurrentPage"}}
+                        {{$PageSize := index .Data "PageSize"}}
+                        <ul id="pagination-id" class="pagination">
+                            {{pagination $CurrentPage $PageSize}}
+                        </ul>
                     </nav>
                 </div>
             </div>
@@ -67,15 +75,121 @@
 
 {{end}}
 
-{{define "js"}}
+{{define "js" }}
 <script>
-    document.querySelectorAll("#pagination li").forEach((li, index) => {
-        li.classList.add('page-item');
-    });
+    checkAuth();
+    {{/* const pagination = document.getElementById("pagination-id");
+    const currentpage = document.querySelector('li.page-item.active > a.page-link'); */}}
 
-    document.querySelectorAll("#pagination a").forEach(a => {
-        a.classList.add('page-link');
-    })
+    {{/* function paginator(pages, curPage) {
+        let p = document.getElementById("paginator");
+
+        let html = `<li class="page-item"><a href="#!" class="page-link pager" data-page="${curPage - 1}">&lt;</a></li>`;
+
+        for (var i = 0; i <= pages; i++) {
+            html += `<li class="page-item"><a href="#!" class="page-link pager" data-page="${i + 1}">${i + 1}</a></li>`;
+        }
+
+        html += `<li class="page-item"><a href="#!" class="page-link pager" data-page="${curPage + 1}">&gt;</a></li>`;
+
+        p.innerHTML = html;
+
+        let pageBtns = document.getElementsByClassName("pager");
+        for (var j = 0; j < pageBtns.length; j++) {
+            pageBtns[j].addEventListener("click", function(evt){
+                let desiredPage = evt.target.getAttribute("data-page");
+                if ((desiredPage > 0) && (desiredPage <= pages + 1)) {
+                    updateTable(pageSize, desiredPage);
+                }
+            })
+        }
+    } */}}
+
+    {{/* function updateTable(ps, cp) {
+
+        // lay thong tin ve token va current page
+        let token = localStorage.getItem("token");
+        let page;
+        const currentpage = document.querySelector('li.page-item.active > a.page-link');
+        if (currentpage == null) page = 1;
+        else page = parseInt(currentpage.text, 10)
+        var payLoad struct {
+            Page: page,
+            Limit: 6,
+        }
+
+        const requestOptions = {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+            },
+            body: JSON.stringify(body),
+        }
+
+        fetch("http://localhost:4001/api/users/products", requestOptions)
+        .then(response => response.json())
+        .then(function (data) {        
+            if (data.orders) {
+                data.orders.forEach(function(i) {
+                    let newRow = tbody.insertRow();
+                    let newCell = newRow.insertCell();
+                    newCell.innerHTML = `<a href="/admin/subscriptions/${i.id}">Order ${i.id}</a>`;
+
+                    newCell = newRow.insertCell();
+                    let item = document.createTextNode(i.customer.last_name + ", " + i.customer.first_name);
+                    newCell.appendChild(item);
+
+                    newCell = newRow.insertCell();
+                    item = document.createTextNode(i.widget.name);
+                    newCell.appendChild(item);
+                    
+                    let cur = formatCurrency(i.transaction.amount);
+                    newCell = newRow.insertCell();
+                    item = document.createTextNode(cur + "/month");
+                    newCell.appendChild(item);
+
+                    newCell = newRow.insertCell();
+                    if (i.status_id != 1) {
+                        newCell.innerHTML = `<span class="badge bg-danger">Cancelled</span>`;
+                    } else {
+                        newCell.innerHTML = `<span class="badge bg-success">Charged</span>`;
+                    }
+                })
+                paginator(data.last_page, data.current_page);
+            } else {
+                let newRow = tbody.insertRow();
+                let newCell = newRow.insertCell();
+                newCell.setAttribute("colspan", "5");
+                newCell.innerHTML = "No data available";
+            }
+        })
+    } */}}
+
+    function previous(currentpage) {
+        var currentURL = window.location.toString();
+        var rtn = RemoveParams("page", currentURL).toString();
+        if (rtn.includes("?")) {
+            window.location.href = rtn + "&page=" + (currentpage - 1 > 0 ? currentpage - 1 : 1);
+        } else {
+            window.location.href = rtn + "?page=" + (currentpage - 1 > 0 ? currentpage - 1 : 1);
+        }
+    }
+
+    function next(currentpage, pagesize) {
+        var currentURL = window.location.toString();
+        var rtn = RemoveParams("page", currentURL).toString();
+        if (rtn.includes("?")) {
+            window.location.href = rtn + "&page=" + (currentpage + 1 <= pagesize ? currentpage + 1 : pagesize);
+        } else {
+            window.location.href = rtn + "?page=" + (currentpage + 1 <= pagesize ? currentpage + 1 : pagesize);
+        }
+    }
+
+    {{/* document.addEventListener("DOMContentLoaded", function() {
+        updateTable(pageSize, currentPage);
+    }) */}}
 </script>
 
 {{end}}

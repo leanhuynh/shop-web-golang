@@ -20,3 +20,6 @@ add_foreign_key("Address", "user_id", {"User": ["id"]}, {
     "on_delete": "CASCADE",
     "on_update": "CASCADE",
 })
+
+sql("insert into Address (user_id, first_name, last_name, email, mobile, address, country, city, state, zip_code) values (1, 'le', 'an', '20120028@student.hcmus.edu.vn', '0971031912', 'To dan pho Quyet Thang', 'Viet Nam', 'Quang Ngai', 'afaf', 'afafa');")
+sql("insert into Address (user_id, first_name, last_name, email, mobile, address, country, city, state, zip_code) values (1, 'le', 'an', 'leanhuynh2002@gmail.com', '0971031912', 'KTX Bach Khoa', 'Viet Nam', 'Quang Ngai', 'afaf', 'afafa');")
