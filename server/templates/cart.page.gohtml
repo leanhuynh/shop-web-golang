@@ -1,0 +1,100 @@
+{{template "base" .}}
+
+{{define "body"}}
+
+<!-- Breadcrumb Start -->
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/product">Products</a></li>
+            <li class="breadcrumb-item active">Cart</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+
+<!-- Cart Start -->
+{{/* {{with index .Data "Cart"}} */}}
+<div class="cart-page">
+    <div id="cart" class="container">
+        {{$cart := index .Data "Cart"}}
+        {{if $cart.Quantity}}
+        {{with $cart}}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                    <th>Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody class="align-middle">
+                                {{range .CartDetail}}
+                                <tr id="product{{.ProductId}}">
+                                    <td><a href="/product/{{.ProductId}}"><img src="{{.ImagePath}}" alt="{{.Name}}"></a></td>
+                                    <td><a href="/product/{{.ProductId}}">{{.Name}}</a></td>
+                                    <td>{{.Price}}</td>
+                                    <td>
+                                        <div class="qty">
+                                            <button class="btn-minus" onclick="updateCart({{.ProductId}}, parseInt(document.getElementById('quantity{{.ProductId}}').value) - 1)"><i class="fa fa-minus"></i></button>
+                                            <input type="number" value="{{.Quantity}}" readonly id="quantity{{.ProductId}}">
+                                            <button class="btn-plus" onclick="updateCart({{.ProductId}}, parseInt(document.getElementById('quantity{{.ProductId}}').value) + 1)"><i class="fa fa-plus"></i></button>
+                                        </div>
+                                    </td>
+                                    <td id="total{{.ProductId}}">{{.Total}}</td>
+                                    <td><button onclick="removeProductFromCart({{.ProductId}})"><i class="fa fa-trash"></i></button></td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="coupon">
+                        <input type="text" placeholder="Coupon Code">
+                        <button>Apply Code</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="cart-summary">
+                        <div class="cart-content">
+                            <h3>Cart Summary</h3>
+                            <p>Sub Total<span id="subtotal">{{.SubTotal}}</span></p>
+                            <p>Shipping Cost<span>0</span></p>
+                            <h4>Grand Total<span id="total">{{.Total}}</span></h4>
+                        </div>
+                        <div class="cart-btn">
+                            <button onclick="clearCart()">Clear Cart</button>
+                            <button onclick="location.href='/user/checkout'">Checkout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{end}}
+        {{else}}
+            <div class="text-center border py-3">
+                <h3>Your cart is empty!</h3>
+            </div>
+        {{end}}
+    </div>
+</div>
+{{/* {{end}} */}}
+<!-- Cart End -->
+
+{{end}}
+
+{{define "js" }}
+    <script>
+        showNotification({{index .Data "Message"}})
+    </script>
+{{end}}

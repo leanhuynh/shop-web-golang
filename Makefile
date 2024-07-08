@@ -1,60 +1,37 @@
 SHELL=cmd
-STRIPE_SECRET=
-STRIPE_KEY=
-GOSTRIPE_PORT=4000
-API_PORT=4001
-DSN="root:leanhuynh236@tcp(localhost:3306)/go_stripe?parseTime=true&tls=false"
 
-## build: builds all binaries
-build: clean build_front build_back
+# build: builds all binaries
+build: clean build_server
 	@echo All binaries built!
 
-## clean: cleans all binaries and runs go clean
+# clean: cleans all binaries and runs go clean
 clean:
 	@echo Cleaning...
 	@echo y | DEL /S dist
 	@go clean
 	@echo Cleaned and deleted binaries
 
-## build_front: builds the front end
-build_front:
-	@echo Building front end...
-	@go build -o dist/gostripe.exe ./cmd/web
-	@echo Front end built!
+# build_server: builds the server
+build_server:
+	@echo Building server...
+	@go build -o dist/gostripe.exe ./server
+	@echo Server built!
 
-## build_back: builds the back end
-build_back:
-	@echo Building back end...
-	@go build -o dist/gostripe_api.exe ./cmd/api
-	@echo Back end built!
+# start: start the server
+start: start_server
 
-## start: starts front and back end
-start: start_front start_back
+# start_server: starts the server
+start_server: build_server
+	@echo Starting the server...
+	${SHELL} /c start /B ./dist/gostripe.exe
+	@echo Server running!
 
-## start_front: starts the front end
-start_front: build_front
-	@echo Starting the front end...
-	start /B .\dist\gostripe.exe -dsn=${DSN}
-	@echo Front end running!
+# stop: stop the server
+stop: stop_server
+	@echo Server stopped
 
-## start_back: starts the back end
-start_back: build_back
-	@echo Starting the back end...
-	set STRIPE_KEY=${STRIPE_KEY}&& set STRIPE_SECRET=${STRIPE_SECRET}&& start /B .\dist\gostripe_api.exe -dsn=${DSN}
-	@echo Back end running!
-
-## stop: stops the front and back end
-stop: stop_front stop_back
-	@echo All applications stopped
-
-## stop_front: stops the front end
-stop_front:
-	@echo Stopping the front end...
+# stop_server: stops the server
+stop_server: 
+	@echo Stopping the server...
 	@taskkill /IM gostripe.exe /F
-	@echo Stopped front end
-
-## stop_back: stops the back end
-stop_back:
-	@echo Stopping the back end...
-	@taskkill /IM gostripe_api.exe /F
-	@echo Stopped back end
+	@echo Server stopping

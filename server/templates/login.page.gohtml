@@ -1,0 +1,114 @@
+{{template "base" .}}
+
+{{define "title"}}
+    Sign In
+{{end}}
+
+{{define "body"}}
+<!-- Breadcrumb Start -->
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="http://localhost:4000">Home</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000/users/profile">User</a></li>
+            <li class="breadcrumb-item active">Register & Login</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+
+<!-- Login Start -->
+<div class="login">
+    <div class="container">
+        <div class="section-header">
+            <h3>User Login</h3>
+            <p>
+                VUI LÒNG NHẬP THÔNG TIN TÀI KHOẢN THEO FORM BÊN DƯỚI
+            </p>
+        </div>
+            <form action="/login" method="post">
+                <div class="login-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>E-mail / Username</label>
+                            <input id="email" class="form-control" type="text" placeholder="E-mail" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Pasword</label>
+                            <input id="password" class="form-control" type="password" placeholder="Password" name="password" required>
+                        </div>
+                        {{/* <input type="hidden" name="reqURL" value="{{index .Flash 'reqURL'}}" /> */}}
+                        <div class="col-md-5"></div>
+                        <div class="col-md-7 mb-3 mt-3">
+                            {{/* <button onclick="login()" class="btn">Submit</button> */}}
+                            <button class="btn">Submit</button>
+                            <small><a href="/forgot-password">forgot password</small>
+                        </div>
+                        {{$reqURL := index .Data "ReqURL"}}
+                        {{if $reqURL}}
+                            {{with $reqURL}}
+                                <input type="hidden" name="reqURL" value="{{.}}"/>
+                            {{end}}
+                        {{end}}
+                        {{$loginMessage := index .Flash "LoginMessage"}}
+                        {{if $loginMessage}}
+                            {{with $loginMessage}}
+                                <div class="col-md-12 mb-3 mt-3">
+                                    <div class="alert alert-warning">{{.}}</div>
+                                </div>
+                            {{end}}
+                        {{end}}
+                    </div>
+                <div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Login End -->
+{{end}}
+
+{{define "js"}}
+<script>
+    {{/* const email = document.getElementById("email");
+    const password = document.getElementById("password");
+
+    async function login() {
+        // check if input information is correct form
+        
+        let payload = {
+            Email: email.value,
+            Password: password.value,
+        }
+
+        const requestOptions = {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+        }
+
+        let status 
+        const res = await fetch("http://localhost:4001/api/login", requestOptions)
+        .then(response => {
+            status = response.status
+            return response.json()
+        })
+        
+        showNotification(res.message)
+        
+        // neu login thanh cong, 
+        // luu token va expiry vao local storage
+        if (status == 200) {
+            // luu vao local storage
+            localStorage.setItem("token", res.authentication_token.token);
+            localStorage.setItem("token_expiry", res.authentication_token.expiry);
+
+            // chuyen huong trang web toi trang chu
+            window.location.href = "http://localhost:4000"; 
+        }
+    } */}}
+</script>
+{{end}}

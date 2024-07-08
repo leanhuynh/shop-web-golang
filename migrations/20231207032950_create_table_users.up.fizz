@@ -11,4 +11,4 @@ create_table("User") {
 sql("alter table User alter column created_at set default now();")
 sql("alter table User alter column updated_at set default now();")
 
-sql("insert into User(id, first_name, last_name, mobile, email, password, is_admin) values (1, 'An', 'Le Huynh', '0971031912', 'leanhuynh2002@gmail.com', '$2a$10$yDwmVdFnhCekee/9JUx1b.QviQxiVPuvbCWiNCYudqze9IXaXuqHG', true);")
+sql("insert into User(id, first_name, last_name, mobile, email, password, is_admin) values (1, 'An', 'Le Huynh', '0971031912', 'leanhuynh2002@gmail.com', '$2a$10$EBxauq.MDu0OJ8zumJ11Ceb3bKkrWiGNqUdbQu/GXGZ4CHKwXSNLa', true);")

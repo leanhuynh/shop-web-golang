@@ -1,0 +1,29 @@
+{{template "base" .}}
+
+{{define "title" }}
+    Not found page
+{{end}}
+
+{{define "body" }}
+    <div class="container mt-2">
+        <div class="section-header">
+            <h3>Message</h3>
+            {{$errorMessage := index .Data "Error"}}
+            {{if $errorMessage}}
+                {{with $errorMessage}}
+                    <p class="alert alert-warning">
+                        {{.}}
+                    </p>
+                {{end}}
+            {{else}}
+                <p class="alert alert-warning">
+                    File Not Found
+                </p>
+            {{end}}
+        </div>
+    </div>
+{{end}}
+
+{{define "js"}}
+
+{{end}}

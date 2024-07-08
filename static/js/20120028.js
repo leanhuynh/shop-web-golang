@@ -1,267 +1,165 @@
 "use strict";
 
-async function loadcartquantity() {
-  // get information
-  const token = localStorage.getItem("token");
-  const cart_quantity = document.getElementById("cart-quantity");
+// load constant value
+const PORT = 4000;
+const HOST = "http://localhost";
+const DB_DSN =
+  "root:leanhuynh236@tcp(localhost:3306)/go_stripe?parseTime=true&tls=false";
+const SMTP_HOST = "smtp.mailtrap.io";
+const SMTP_USERNAME = "dc8f045580cde0";
+const SMTP_PASSWORD = "7810f125ae27ba";
+const SMTP_PORT = 587;
+const SECRET_KEY = "secret";
+const SESSION_KEY = "session";
 
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("Authorization", "Bearer " + token);
-
-  const requestOptions = {
-    method: "Get",
-    headers: myHeaders,
-  };
-
-  const res = await fetch(
-    "http://localhost:4001/api/cart",
-    requestOptions
-  ).then((response) => {
-    return response.json();
-  });
-
-  console.log(res);
-
-  var quantity = 0;
-  if (res.cart != null) {
-    for (var cart of res.cart) {
-      quantity += parseInt(cart.quantity);
-    }
+// hàm thông báo lỗi
+function showNotification(message) {
+  // chỉ thông báo khi message khác ""
+  if (message != "" && message != undefined && message != null) {
+    alert(message);
   }
-  cart_quantity.textContent = quantity;
-
-  return Promise.resolve();
 }
 
-async function loadcart() {
-  // get information
-  const token = localStorage.getItem("token");
-  const cart_quantity = document.getElementById("cart-quantity");
-
+// hàm thêm sản phẩm vào giỏ hàng
+function addToCart(id, quantity) {
+  // tạo header của request
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("Authorization", "Bearer " + token);
+  myHeaders.append("Accept", "application/json");
 
-  const requestOptions = {
-    method: "Get",
-    headers: myHeaders,
-  };
-
-  const res = await fetch(
-    "http://localhost:4001/api/cart",
-    requestOptions
-  ).then((response) => {
-    return response.json();
-  });
-
-  const cartelement = document.getElementById("cart");
-
-  // neu khong co san pham trong gio hang
-  if (res.cart == null) {
-    cartelement.innerHTML = ` <div class="text-center border py-3">
-            <h3>Your cart is empty!</h3>
-        </div>`;
-    return;
-  }
-
-  // neu co san pham trong gio hang
-  var html = `        <div class="row">
-            <div class="col-md-12">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Image</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Quantity</th>
-                                <th>Total</th>
-                                <th>Remove</th>
-                            </tr>
-                        </thead>
-                        <tbody class="align-middle">`;
-
-  // xu ly html cua checkout
-  var subtotal = 0,
-    shipping = 0,
-    total = 0;
-
-  for (var order of res.cart) {
-    subtotal += order.total;
-    html += `     <tr id="product${order.product_id}">
-                                <td><a href="/products/${order.product_id}"><img src="${order.image_path}" alt="${order.quantity}"></a></td>
-                                <td><a href="/products/${order.product_id}">${order.name}</a></td>
-                                <td>${order.price}</td>
-                                <td>
-                                    <div class="qty">
-                                        <button class="btn-minus" onclick="updateCart(${order.product_id}, parseInt(document.getElementById('quantity${order.product_id}').value) - 1).then(loadcartquantity).then(loadcart)"><i class="fa fa-minus"></i></button>
-                                        <input type="number" value="${order.quantity}" readonly id="quantity${order.product_id}">
-                                        <button class="btn-plus" onclick="updateCart(${order.product_id}, parseInt(document.getElementById('quantity${order.product_id}').value) + 1).then(loadcartquantity).then(loadcart)"><i class="fa fa-plus"></i></button>
-                                    </div>
-                                </td>
-                                <td id="total${order.product_id}">${order.total}</td>
-                                <td><button onclick="removeCart(${order.product_id}).then(loadcartquantity).then(loadcart)"><i class="fa fa-trash"></i></button></td>
-                            </tr>`;
-  }
-
-  // handle subtotal, shipping, total
-  total = subtotal;
-  html += `</tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="coupon">
-                    <input type="text" placeholder="Coupon Code">
-                    <button>Apply Code</button>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="cart-summary">
-                    <div class="cart-content">
-                        <h3>Cart Summary</h3>
-                        <p>Sub Total<span id="subtotal">${subtotal}</span></p>
-                        <p>Shipping Cost<span>${shipping}</span></p>
-                        <h4>Grand Total<span id="total">${total}</span></h4>
-                    </div>
-                    <div class="cart-btn">
-                        <button onclick="ClearCart().then(loadcartquantity).then(loadcart)">Clear Cart</button>
-                        <button onclick="location.href='/users/checkout'">Checkout</button>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-
-  document.getElementById("cart").innerHTML = html;
-
-  return Promise.resolve();
-}
-
-async function addCart(id, quantity, callback) {
-  if (localStorage.getItem("token") === null) {
-    window.location.href = "/login";
-    return;
-  }
-
-  // create header with token to authenticate
-  let token = localStorage.getItem("token");
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("Authorization", "Bearer " + token);
-
+  // payLoad chứa thông tin request
   const payLoad = {
-    ID: id,
+    ID: id, // product_id
     Quantity: quantity,
   };
 
+  // tạo request
   const requestOptions = {
-    method: "put",
+    method: "POST",
     headers: myHeaders,
     body: JSON.stringify(payLoad),
   };
 
-  let status;
-  const res = await fetch(
-    "http://localhost:4001/api/cart/add",
+  // gửi request
+  fetch(
+    `${HOST}:${PORT}/cart/add`, // tạo url để gửi request
     requestOptions
   ).then((response) => {
-    status = response.status;
-    return response.json();
+    // lấy thông tin status của response
+    const status = response?.status;
+    /**
+     * nếu thêm thành công vào giỏ hàng --> reload lại trang
+     * nếu thêm không thành công --> chỉ xuất ra thông báo không thành công
+     */
+    if (status === 200) {
+      showNotification("Thêm sản phẩm vào giỏ hàng thành công");
+      location.reload(); // reload lại page
+    } else {
+      showNotification("Thêm sản phẩm vào giỏ hàng không thành công");
+    }
   });
-
-  console.log(res);
-
-  callback();
-
-  // let json = await res.json();
-  // document.getElementById("cart-quantity").innerText = `(${json.quantity})`;
 }
 
-async function updateCart(id, quantity) {
+// hàm cập nhật số lượng sản phẩm (khi người dùng đang ở giao diện giỏ hàng và cần thay dổi số lượng sản phẩm)
+function updateCart(id, quantity) {
   if (quantity > 0) {
-    const token = localStorage.getItem("token");
-    const cart_quantity = document.getElementById("cart-quantity");
+    // const token = localStorage.getItem("token");
+    // const cart_quantity = document.getElementById("cart-quantity");
 
-    // tao headers
+    // tạo header của request
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", "Bearer " + token);
+    myHeaders.append("Accept", "application/json");
 
     const requestOptions = {
-      method: "post",
+      method: "POST",
       headers: myHeaders,
       body: JSON.stringify({ id, quantity }),
     };
 
-    const res = await fetch(
-      "http://localhost:4001/api/cart/update",
-      requestOptions
-    );
-
-    if (res.status == 200) {
-      return Promise.resolve();
-    }
+    // gửi yêu cầu cập nhật lại số lượng của sản phẩm trong giỏ hàng
+    fetch(`${HOST}:${PORT}/cart/update`, requestOptions).then((response) => {
+      const status = response.status;
+      console.log(response);
+      if (status === 200) {
+        // showNotification("Cập nhật số lượng sản phẩm thành công");
+        location.reload(); // reload lại page
+      } else {
+        showNotification("Cập nhật số lượng sản phẩm thất bại");
+        location.reload();
+      }
+    });
   } else {
-    removeCart(id);
+    removeProductFromCart(id);
   }
 }
 
-async function removeCart(id) {
-  if (confirm("Do you really want to remove this product?")) {
-    const token = localStorage.getItem("token");
-    const cart_quantity = document.getElementById("cart-quantity");
-
-    // tao headers
+// hàm xóa sản phẩm ra khỏi giỏ hàng
+function removeProductFromCart(id) {
+  // cần xác nhận lại người dùng có muốn xóa sản phẩm ra khỏi giỏ hàng
+  if (confirm("Bạn có muốn xóa sản phẩm ra khỏi giỏ hàng?")) {
+    // tạo header cho request
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", "Bearer " + token);
+    myHeaders.append("Accept", "application/json");
 
+    // tạo request
     const requestOptions = {
-      method: "delete",
+      method: "DELETE",
       headers: myHeaders,
       body: JSON.stringify({ id }),
     };
 
-    const res = await fetch(
-      "http://localhost:4001/api/cart/remove",
-      requestOptions
-    );
+    // gửi request tới server
+    fetch(`${HOST}:${PORT}/cart/remove`, requestOptions).then((response) => {
+      const status = response.status; // lấy thông tin status trong response
 
-    if (res.status == 200) {
-      return Promise.resolve();
-    }
+      if (status === 200) {
+        // thực hiện thành công
+        showNotification("Xóa sản phẩm ra khỏi giỏ hàng thành công");
+        location.reload(); // reload lại page
+      } else {
+        // thao tác không thể thực hiện
+        showNotification("Thao tác hiện không thể thực hiện được");
+        location.reload();
+      }
+    });
   }
 }
 
-async function ClearCart() {
-  if (confirm("Do you really want to clear all cart?")) {
-    const token = localStorage.getItem("token");
-    const cart_quantity = document.getElementById("cart-quantity");
-
-    // tao headers
+// hàm xóa giỏ hàng
+function clearCart() {
+  // xác nhận xóa toàn bộ sản phẩm trong giỏ hàng
+  if (confirm("Bạn có muốn xóa toàn bộ giỏ hàng?")) {
+    // tạo header cho request
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", "Bearer " + token);
+    myHeaders.append("Accept", "application/json");
 
+    // tạo request
     const requestOptions = {
-      method: "delete",
+      method: "DELETE",
       headers: myHeaders,
     };
 
-    const res = await fetch(
-      "http://localhost:4001/api/cart/delete",
-      requestOptions
-    );
+    // gửi request tới server
+    fetch(`${HOST}:${PORT}/cart/delete`, requestOptions).then((response) => {
+      const status = response.status; // lấy thông tin status trong response
 
-    if (res.status == 200) {
-      return Promise.resolve();
-    }
+      if (status === 200) {
+        // thành công
+        showNotification("Xóa giỏ hàng thành công");
+        location.reload(); // reload lại page
+      } else {
+        // thất bại
+        showNotification("Xóa giỏ hàng thất bại");
+        location.reload();
+      }
+    });
   }
 }
 
+// hàm lấy originalURL cho các thẻ a
 function RemoveParams(key, sourceURL) {
   // split to get the url before query
   var rtn;
@@ -296,4 +194,102 @@ function RemoveParams(key, sourceURL) {
   }
 
   return rtn;
+}
+
+// hàm kiểm tra confirmPassword và password có match với nhau hay không
+function checkPasswordConfirm(formId) {
+  let password = document.querySelector(`#${formId} [name=password]`);
+  let confirmPassword = document.querySelector(
+    `#${formId} [name=confirmPassword]`
+  );
+
+  if (password.value != confirmPassword.value) {
+    confirmPassword.setCustomValidity("Passwords not match");
+    confirmPassword.reportValidity();
+  } else {
+    confirmPassword.setCustomValidity("");
+  }
+}
+
+// hàm đặt hàng
+function placeOrder() {
+  // lấy shipping address được chọn
+  const shippingAddress = document.querySelector(
+    'input[name="addressId"]:checked'
+  );
+
+  if (shippingAddress === null) {
+    showNotification("Vui lòng chọn địa chỉ nhận hàng");
+    return;
+  }
+
+  /**
+   * lấy id của shipping address
+   * value rỗng (địa chỉ nhận hàng khác) --> addressId = 0
+   */
+  const addressId = shippingAddress.value;
+
+  // lấy method được chọn
+  const methodPay = document.querySelector('input[name="payment"]:checked');
+
+  if (methodPay === null) {
+    showNotification("Vui lòng chọn phương thức thanh toán");
+    return;
+  }
+
+  // lấy phương thức thanh toán
+  const method = methodPay.value;
+
+  // tạo request
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+  myHeaders.append("Accept", "application/json");
+
+  // lấy thông tin trong form nếu người dùng chọn địa chỉ khác
+  let firstName, lastName, email, mobile, address, country, city;
+  if (addressId === "0") {
+    firstName = document.getElementById("first-name").value;
+    lastName = document.getElementById("last-name").value;
+    email = document.getElementById("e-mail").value;
+    mobile = document.getElementById("mobile-no").value;
+    address = document.getElementById("address").value;
+    country = document.getElementById("country").value;
+    city = document.getElementById("city").value;
+  }
+
+  console.log(
+    `firstName: ${firstName} lastName: ${lastName} email: ${email} mobile: ${mobile} address: ${address} country: ${country} city: ${city}`
+  );
+
+  console.log(`id: ${addressId} method: ${method}`);
+
+  // tạo request
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: JSON.stringify({
+      addressId,
+      method,
+      firstName,
+      lastName,
+      email,
+      address,
+      country,
+      city,
+    }),
+  };
+
+  // gửi request
+  fetch(`${HOST}:${PORT}/user/order`, requestOptions).then((response) => {
+    const status = response.status;
+    response.json().then((res) => {
+      const message = res.message; // lấy message trong response
+      if (status === 200) {
+        showNotification(message);
+        window.location.href = "/cart";
+      } else {
+        showNotification(message);
+      }
+    });
+  });
 }

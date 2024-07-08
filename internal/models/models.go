@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -116,6 +118,24 @@ type Product struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
+type ProductWithHostPort struct {
+	ID            int       `json:"id"`
+	Name          string    `json:"name"`
+	ImagePath     string    `json:"image_path"`
+	OldPrice      float32   `json:"old_price"`
+	Price         float32   `json:"price"`
+	Summary       string    `json:"summary"`
+	Description   string    `json:"description"`
+	Specification string    `json:"specification"`
+	Stars         float32   `json:"stars"`
+	Quantity      int       `json:"quantity"`
+	CategoryId    int       `json:"category_id"`
+	BrandId       int       `json:"brand_id"`
+	CreatedAt     time.Time `json:"created_at"`
+	Host          string    `json:"host"`
+	Port          int       `json:"port"`
+}
+
 type ProductTag struct {
 	TagId     int `json:"tag_id"`
 	ProductId int `json:"product_id"`
@@ -143,9 +163,27 @@ type WishList struct {
 	ProductId int `json:"product_id"`
 }
 
+type Invoice struct {
+	No          int       `json:"no"`
+	UserId      int       `json:"user_id"`
+	ProductId   int       `json:"product_id"`
+	ProductName string    `json:"product_name"`
+	ImagePath   string    `json:"image_path"`
+	Quantity    int       `json:"quantity"`
+	Price       float64   `json:"price"`
+	Status      string    `json:"status"`
+	BoughtDate  time.Time `json:"bought_date"`
+}
+
 func (m *DBModel) CreateUser(email string, password string, firstname string, lastname string, mobile string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
+	// kiểm tra email có trùng hay không
+	User, _ := m.GetUserByEmail(email)
+	if User.Email == email {
+		return errors.New("tồn tại tài khoản cùng email")
+	}
 
 	stmt := `insert into user (email, password, first_name, last_name, mobile) values (?, ?, ?, ?, ?)`
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -281,116 +319,63 @@ func (m *DBModel) GetAddressForUser(user_id int) ([]Address, error) {
 	return Addresses, nil
 }
 
-func (m *DBModel) InsertOrder(token string, quantity int, price float32) (bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	var user *User
-	user, err := m.GetUserForToken(token)
-	if err != nil {
-		return false, errors.New("no match token")
+// hàm xử lý order, thêm sản phẩm vào order
+func (m *DBModel) InsertOrder(userId int, cart []CartDetail, firstName string, lastName string, email string, mobile string, address string, country string, city string) (bool, error) {
+	if len(cart) == 0 {
+		return false, errors.New("không có sản phẩm trong giỏ hàng")
 	}
 
-	_, err = m.DB.ExecContext(ctx, `insert into PlaceOrder (user_id, quantity, price) values (?, ?, ?)`, user.ID, quantity, price)
-	if err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	queryInfor := []interface{}{}
+	stmt := "insert into Invoice (user_id, product_id, image_path, price, quantity, first_name, last_name, email, mobile, address, country, city) values "
+
+	// thực hiện với product-0
+	queryInfor = append(queryInfor, userId)
+	queryInfor = append(queryInfor, cart[0].ProductId)
+	queryInfor = append(queryInfor, cart[0].ImagePath)
+	queryInfor = append(queryInfor, cart[0].Price)
+	queryInfor = append(queryInfor, cart[0].Quantity)
+	queryInfor = append(queryInfor, firstName)
+	queryInfor = append(queryInfor, lastName)
+	queryInfor = append(queryInfor, email)
+	queryInfor = append(queryInfor, mobile)
+	queryInfor = append(queryInfor, address)
+	queryInfor = append(queryInfor, country)
+	queryInfor = append(queryInfor, city)
+	stmt += " (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+
+	for index := 1; index < len(cart); index++ {
+		queryInfor = append(queryInfor, userId)
+		queryInfor = append(queryInfor, cart[index].ProductId)
+		queryInfor = append(queryInfor, cart[index].ImagePath)
+		queryInfor = append(queryInfor, cart[index].Price)
+		queryInfor = append(queryInfor, cart[index].Quantity)
+		queryInfor = append(queryInfor, firstName)
+		queryInfor = append(queryInfor, lastName)
+		queryInfor = append(queryInfor, email)
+		queryInfor = append(queryInfor, mobile)
+		queryInfor = append(queryInfor, address)
+		queryInfor = append(queryInfor, country)
+		queryInfor = append(queryInfor, city)
+		stmt += " , (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+	}
+
+	fmt.Println(queryInfor...)
+	fmt.Println(stmt)
+
+	_, err := m.DB.ExecContext(ctx, stmt, queryInfor...)
+	if err != nil { // nếu thao tác không thể thực thi
 		return false, err
 	}
 
+	// thao tác được thực hiện --> xóa tất cả sản phẩm trong giỏ hàng
+	m.RemoveCart(userId)
 	return true, nil
 }
 
-func (m *DBModel) GetProductList(stmt string, data []interface{}) ([]Product, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	// execute query
-	rows, err := m.DB.QueryContext(ctx, stmt, data...)
-	if err != nil {
-		return nil, err
-	}
-
-	// scan rows
-	var ProductList []Product
-	for rows.Next() {
-		var product Product
-		err = rows.Scan(&product.ID, &product.Name, &product.ImagePath, &product.Stars, &product.Price, &product.OldPrice)
-		if err != nil {
-			return nil, err
-		}
-		ProductList = append(ProductList, product)
-	}
-
-	return ProductList, nil
-}
-
-func (m *DBModel) GetAllCategories() ([]Category, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	stmt := `
-		select 
-			t1.id, t1.name, t1.image_path, count(t2.id) as num_of_product  
-		from 
-			Category as t1
-		left join 
-			product as t2 on t1.id = t2.category_id 
-		group by 
-			t1.id;
-	`
-	rows, err := m.DB.QueryContext(ctx, stmt)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var Categories []Category
-
-	for rows.Next() {
-		var category Category
-		err = rows.Scan(&category.ID, &category.Name, &category.ImagePath, &category.NumOfProduct)
-		if err != nil {
-			return nil, err
-		}
-		Categories = append(Categories, category)
-	}
-
-	return Categories, nil
-}
-
-func (m *DBModel) GetAllBrand() ([]Brand, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	rows, err := m.DB.QueryContext(ctx, `
-	select 
-		t1.id, t1.name, t1.image_path, count(t2.id) as num_of_product  
-	from 
-		Brand as t1
-	left join 
-		 Product as t2 
-	on t1.id = t2.brand_id 
-	group by 
-		t1.id
-	`)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var Brands []Brand
-
-	for rows.Next() {
-		var brand Brand
-		err = rows.Scan(&brand.ID, &brand.Name, &brand.ImagePath, &brand.NumOfProduct)
-		if err != nil {
-			return nil, err
-		}
-		Brands = append(Brands, brand)
-	}
-
-	return Brands, nil
-}
-
-func (m *DBModel) GetAllTag() ([]Tag, error) {
+func (m *DBModel) GetAllTags() ([]Tag, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -455,4 +440,476 @@ func (m *DBModel) GetProductById(product_id int) (Product, error) {
 	}
 
 	return product, nil
+}
+
+func (m *DBModel) GetAvailableShippingAddress(user User) ([]Address, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// thực hiện query lấy tất cả Available Shipping Address của User
+	rows, err := m.DB.QueryContext(ctx, `
+	select user_id, first_name, last_name, email, mobile, address, country, city, state, zip_code, is_default 
+	from Address
+	where user_id = ?
+	`, user.ID)
+
+	// kiểm tra nếu có lỗi xảy ra
+	if err != nil {
+		return nil, err
+	}
+
+	var Addresses []Address
+
+	for rows.Next() {
+		var address Address
+		err = rows.Scan(
+			&address.ID,
+			&address.FirstName,
+			&address.LastName,
+			&address.Email,
+			&address.Mobile,
+			&address.Address,
+			&address.Country,
+			&address.City,
+			&address.State,
+			&address.ZipCode,
+			&address.IsDefault)
+
+		if err != nil {
+			return nil, err
+		}
+		Addresses = append(Addresses, address)
+	}
+
+	return Addresses, nil
+}
+
+func (m *DBModel) GetAllFeatureProducts(limitProduct int) ([]Product, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// thực hiện query cho feature products
+	rows, err := m.DB.QueryContext(ctx, `
+	select id, name, image_path, stars, price, old_price, created_at
+	from Product
+	order by stars DESC
+	limit ?
+	`, limitProduct)
+
+	// trả về error
+	if err != nil {
+		return nil, err
+	}
+
+	var featureProducts []Product
+	// convert các products trong rows thành type Product
+	// và lưu trong array
+	for rows.Next() {
+		var product Product
+		err = rows.Scan(
+			&product.ID,
+			&product.Name,
+			&product.ImagePath,
+			&product.Stars,
+			&product.Price,
+			&product.OldPrice,
+			&product.CreatedAt)
+
+		if err != nil {
+			return nil, err
+		}
+
+		featureProducts = append(featureProducts, product)
+	}
+
+	return featureProducts, nil
+}
+
+func (m *DBModel) GetAllCategories() ([]Category, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// thực hiện query
+	rows, err := m.DB.QueryContext(ctx, `
+	select id, name, image_path
+	from Category
+	`)
+
+	// trả về nill nếu xảy ra lỗi
+	if err != nil {
+		return nil, err
+	}
+
+	var categoryArray []Category
+	for rows.Next() {
+		var category Category
+		err = rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.ImagePath)
+
+		if err != nil {
+			return nil, err
+		}
+		categoryArray = append(categoryArray, category)
+	}
+
+	return categoryArray, nil
+}
+
+func (m *DBModel) GetRecentProducts() ([]Product, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// do query in database
+	rows, err := m.DB.QueryContext(ctx, `
+	select id, name, image_path, stars, price, old_price, created_at
+	from Product
+	order by created_at DESC
+	limit ?
+	`, 10)
+
+	// if error occurs, return nil
+	if err != nil {
+		return nil, err
+	}
+
+	// convert infor in rows to Product type
+	var RecentProducts []Product
+	for rows.Next() {
+		var product Product
+		err = rows.Scan(
+			&product.ID,
+			&product.Name,
+			&product.ImagePath,
+			&product.Stars,
+			&product.Price,
+			&product.OldPrice,
+			&product.CreatedAt)
+		// if error occurs, return nil
+		if err != nil {
+			return nil, err
+		}
+		RecentProducts = append(RecentProducts, product)
+	}
+
+	return RecentProducts, nil
+}
+
+func (m *DBModel) GetAllBrands() ([]Brand, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// do query
+	rows, err := m.DB.QueryContext(ctx, `
+	select id, name, image_path
+	from brand
+	`)
+
+	// check if error
+	if err != nil {
+		return nil, err
+	}
+
+	// convert rows into list of brands
+	var Brands []Brand
+	for rows.Next() {
+		var brand Brand
+		err = rows.Scan(
+			&brand.ID,
+			&brand.Name,
+			&brand.ImagePath,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		Brands = append(Brands, brand)
+	}
+
+	return Brands, nil
+}
+
+func (m *DBModel) GetInforCategoriesWithNumofProducts() ([]Category, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// do query
+	rows, err := m.DB.QueryContext(ctx, `
+	select t1.id, t1.name, t1.image_path, count(t2.id) as num_of_product
+	from category as t1
+	left join product as t2 on t1.id = t2.category_id
+	group by t1.id
+	`)
+
+	// check for error
+	if err != nil {
+		return nil, err
+	}
+
+	// convert rows into Category
+	var Categories []Category
+	for rows.Next() {
+		var category Category
+		err = rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.ImagePath,
+			&category.NumOfProduct,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		Categories = append(Categories, category)
+	}
+	// return list of Categories
+	return Categories, nil
+}
+
+func (m *DBModel) GetInfoBrandsWithNumofProduct() ([]Brand, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// do query
+	rows, err := m.DB.QueryContext(ctx, `
+	select t1.id, t1.name, t1.image_path, count(t2.id) as num_of_product
+	from brand as t1
+	left join product as t2
+	on t1.id = t2.brand_id
+	group by 
+	t1.id
+	`)
+
+	// check if error occurs
+	if err != nil {
+		return nil, err
+	}
+
+	// convert rows into Brand
+	var Brands []Brand
+	for rows.Next() {
+		var brand Brand
+		err = rows.Scan(
+			&brand.ID,
+			&brand.Name,
+			&brand.ImagePath,
+			&brand.NumOfProduct,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		Brands = append(Brands, brand)
+	}
+
+	return Brands, nil
+}
+
+func (m *DBModel) GetInforImagesWithProductId(product_id int) ([]Image, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, `
+	select id, name, image_path
+	from image as  t1
+	where t1.product_id = ?
+	`, product_id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var Images []Image
+	for rows.Next() {
+		var image Image
+		err = rows.Scan(&image.ID, &image.Name, &image.ImagePath)
+		if err != nil {
+			return nil, err
+		}
+
+		Images = append(Images, image)
+	}
+
+	return Images, nil
+}
+
+func (m *DBModel) GetBoughtProductWithUserId(userId int) ([]Invoice, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// do query
+	rows, err := m.DB.QueryContext(ctx, `
+	select t2.name, t2.image_path, t1.quantity, t1.price, t1.status, t1.updated_at as bought_date
+	from invoice as t1
+	inner join product as t2 
+	where t1.product_id = t2.id and t1.user_id = ?
+	`, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// convert result of sql into ListInvoice object
+	var ListInvoice []Invoice
+	for rows.Next() {
+		var invoice Invoice
+		err = rows.Scan(&invoice.ProductName, &invoice.ImagePath, &invoice.Quantity, &invoice.Price, &invoice.Status, &invoice.BoughtDate)
+		if err != nil {
+			return nil, err
+		}
+		ListInvoice = append(ListInvoice, invoice)
+	}
+
+	return ListInvoice, nil
+}
+
+func (m *DBModel) GetProductsWithFilter(sort string, search string, tagId int, categoryId int, brandId int, offset int, limit int) ([]Product, error) {
+	queryInfor := []interface{}{}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt := "select t1.id, t1.name, t1.image_path, t1.stars, t1.price, t1.old_price from product t1 "
+
+	// add query tagId
+	if tagId != 0 {
+		stmt += "inner join producttag t2 on t1.id = t2.product_id where t2.tag_id = ? "
+		queryInfor = append(queryInfor, tagId)
+	}
+
+	// add query Search Keyword
+	if search != "" {
+		if strings.Contains(stmt, "where") {
+			stmt += "and t1.name like ? "
+		} else {
+			stmt += "where t1.name like ? "
+		}
+		queryInfor = append(queryInfor, "%"+search+"%")
+	}
+
+	// add query categoryId
+	if categoryId != 0 {
+		if strings.Contains(stmt, "where") {
+			stmt += "and t1.category_id = ? "
+		} else {
+			stmt += "where t1.category_id = ? "
+		}
+		queryInfor = append(queryInfor, categoryId)
+	}
+
+	// add query brandId
+	if brandId != 0 {
+		if strings.Contains(stmt, "where") {
+			stmt += "and t1.brand_id = ? "
+		} else {
+			stmt += "where t1.brand_id = ? "
+		}
+		queryInfor = append(queryInfor, brandId)
+	}
+
+	// add query sort
+	stmt += "order by "
+	if sort == "price" {
+		stmt += "t1.price DESC "
+	} else if sort == "newest" {
+		stmt += "t1.created_at DESC "
+	} else if sort == "popular" {
+		stmt += "t1.stars DESC "
+	}
+
+	// add query page
+	if limit != 0 {
+		stmt += "limit ? offset ? "
+		queryInfor = append(queryInfor, limit)
+		queryInfor = append(queryInfor, offset)
+	}
+
+	var ProductList []Product
+	rows, err := m.DB.QueryContext(ctx, stmt, queryInfor...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var product Product
+		err = rows.Scan(&product.ID, &product.Name, &product.ImagePath, &product.Stars, &product.Price, &product.OldPrice)
+		if err != nil {
+			return nil, err
+		}
+		ProductList = append(ProductList, product)
+	}
+
+	return ProductList, nil
+}
+
+func (m *DBModel) GetRelatedProductsInfor(productId int) ([]Product, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, `
+	select t1.id, t1.name,  t1.image_path, t1.old_price, t1.price
+	from product as t1
+	inner join producttag as t2
+	where t1.id = t2.product_id and t1.id != ? and t2.tag_id in (
+		select tag_id
+		from producttag
+		where product_id = ?
+	)`, productId, productId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var RelatedProducts []Product
+	for rows.Next() {
+		var product Product
+		err = rows.Scan(&product.ID, &product.Name, &product.ImagePath, &product.OldPrice, &product.Price)
+		if err != nil {
+			return nil, err
+		}
+		RelatedProducts = append(RelatedProducts, product)
+	}
+
+	return RelatedProducts, nil
+}
+
+/*
+ * hàm tính toán số loại sản phẩm trong giỏ hàng của người dùng
+ * nếu không có sản phẩm thì trả về giá trị 0
+ */
+func (m *DBModel) CountNumofTypeProductInCartByUserEmail(userEmail string) (int, error) {
+	// nếu người dùng chưa đăng nhập
+	if userEmail == "" {
+		return 0, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// lấy thông tin user
+	user, err := m.GetUserByEmail(userEmail)
+	if err != nil {
+		return 0, err
+	}
+
+	// chứa số loại sản phẩm trong giỏ hàng
+	var quantity int
+
+	// xử lý query
+	err = m.DB.QueryRowContext(ctx, `
+	select COUNT(*) as quantity
+	from CartDetail
+	where user_id = ?
+	`, user.ID).Scan(&quantity)
+
+	// xảy ra lỗi, quantity mặc định là 0
+	if err != nil {
+		return 0, err
+	}
+
+	// trả kết quả
+	return quantity, nil
 }

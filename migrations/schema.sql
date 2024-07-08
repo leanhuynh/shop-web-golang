@@ -120,22 +120,32 @@ CREATE TABLE `image` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `placeorder`
+-- Table structure for table `invoice`
 --
 
-DROP TABLE IF EXISTS `placeorder`;
+DROP TABLE IF EXISTS `invoice`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `placeorder` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `invoice` (
   `user_id` int(11) DEFAULT NULL,
-  `quantity` int(11) DEFAULT NULL,
+  `product_id` int(11) DEFAULT NULL,
+  `image_path` varchar(256) NOT NULL,
   `price` decimal(10,3) DEFAULT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
+  `first_name` varchar(256) NOT NULL,
+  `last_name` varchar(256) NOT NULL,
+  `email` varchar(256) NOT NULL,
+  `mobile` varchar(256) NOT NULL,
+  `address` varchar(256) NOT NULL,
+  `country` varchar(256) NOT NULL,
+  `city` varchar(256) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `PlaceOrder_User_id_fk` (`user_id`),
-  CONSTRAINT `PlaceOrder_User_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  `status` enum('pending','in_progress','completed') NOT NULL DEFAULT 'pending',
+  KEY `Invoice_User_id_fk` (`user_id`),
+  KEY `Invoice_Product_id_fk` (`product_id`),
+  CONSTRAINT `Invoice_Product_id_fk` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `Invoice_User_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -268,4 +278,4 @@ CREATE TABLE `user` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-01-05 21:47:56
+-- Dump completed on 2024-07-08 17:17:37

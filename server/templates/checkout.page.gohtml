@@ -1,0 +1,214 @@
+{{template "base" .}}
+
+{{define "title"}}
+    Sign In
+{{end}}
+
+{{define "body"}}
+<!-- Breadcrumb Start -->
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="http://localhost:4000">Home</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost:4000/products">Products</a></li>
+            <li class="breadcrumb-item active">Checkout</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+
+<!-- Checkout Start -->
+{{/* <form> */}}
+    <div class="checkout">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="billing-address">
+                        <h2 id="ship-address">Shipping Address</h2>
+                        <div class="row">
+                            {{/* load available shipping-addresses */}}
+                            {{$addresses := index .Data "Addresses"}}
+                            {{if $addresses}}
+                                {{range $addresses}}
+                                    <div class="col-md-12">
+                                        <div class="payment-method">
+                                            <div class="custom-control custom-radio">
+                                                <input type="radio" class="custom-control-input" id="address-{{.ID}}" name="addressId"
+                                                    value="{{.ID}}">
+                                                <label class="custom-control-label" for="address-{{.ID}}"><strong>{{.FirstName}} {{.LastName}}</strong></label>
+                                            </div>
+                                            <div class="payment-content" id="address-{{.ID}}-show">
+                                                <p>
+                                                    Email: {{.Email}}<br/>
+                                                    Mobile: {{.Mobile}}<br/>
+                                                    Address: {{.Address}}, {{.City}}, {{.Country}}<br/>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {{end}}
+                            {{end}}
+                            {{/* different shipping-address */}}
+                            <div class="col-md-12">
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" class="custom-control-input" id="shipto" name="addressId" value="0">
+                                    <label class="custom-control-label" for="shipto">Ship to different address</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="shipping-address">
+                        <h2>Shipping Address</h2>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>First Name</label>
+                                <input id="first-name" class="form-control" type="text" placeholder="First Name" name="firstName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Last Name</label>
+                                <input id="last-name" class="form-control" type="text" placeholder="Last Name" name="lastName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>E-mail</label>
+                                <input id="e-mail" class="form-control" type="text" placeholder="E-mail" name="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Mobile No</label>
+                                <input id="mobile-no" class="form-control" type="text" placeholder="Mobile No" name="mobile" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label>Address</label>
+                                <input id="address" class="form-control" type="text" placeholder="Address" name="address" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Country</label>
+                                <select id="country" class="custom-select" name="country">
+                                    <option selected>United States</option>
+                                    <option>Afghanistan</option>
+                                    <option>Albania</option>
+                                    <option>Algeria</option>
+                                    <option>ThaiLand</option>
+                                    <option>EngLand</option>
+                                    <option>VietNam</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label>City</label>
+                                <input id="city" class="form-control" type="text" placeholder="City" name="city">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    {{$cart := index .Data "Cart"}}
+                    {{if $cart}}
+                        {{with $cart}}
+                            <div class="checkout-summary">
+                                <h2>Cart Total</h2>
+                                <div id="summary" class="checkout-content">
+                                    <h3>Products</h3>
+                                    {{/* nếu cartdetail không phải rỗng */}}
+                                    {{if .CartDetail}}
+                                        {{range .CartDetail}}
+                                            <p>{{.Name}} x {{.Quantity}}<span>{{.Total}}</span></p>
+                                        {{end}}
+                                    {{/* nếu cartdetail rỗng */}}
+                                    {{else}}
+                                        <p>Không tìm thấy sản phẩm trong giỏ hàng của bạn</p>
+                                    {{end}}
+                                    <p class="sub-total">Sub Total<span>{{.SubTotal}}</span></p>
+                                    <p class="ship-cost">Shipping Cost<span>0</span></p>
+                                    <h4>Grand Total<span>{{.Total}}</span></h4>
+                                </div>
+                            </div>
+                        {{end}}
+                    {{end}}
+                    <div class="checkout-payment">
+                        <h2>Payment Methods</h2>
+                        <div class="payment-methods">
+                            <div class="payment-method">
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" class="custom-control-input" id="payment-1" name="payment"
+                                        value="MOMO">
+                                    <label class="custom-control-label" for="payment-1">Momo</label>
+                                </div>
+                                <div class="payment-content" id="payment-1-show">
+                                    <p>
+                                        Sử dụng tài khoản MOMO để thanh toán cho đơn hàng.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="payment-method">
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" class="custom-control-input" id="payment-2" name="payment"
+                                        value="COD">
+                                    <label class="custom-control-label" for="payment-2">Cash on Delivery</label>
+                                </div>
+                                <div class="payment-content" id="payment-2-show">
+                                    <p>
+                                        Thanh toán trực tiếp cho dơn hàng.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="checkout-btn">
+                            <button onclick="placeOrder()">Place Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{{/* </form> */}}
+<!-- Checkout End -->
+{{end}}
+
+{{define "js"}} 
+<script>
+    {{/* async function placeOrder() {
+        const myHeaders = new Headers();
+        const token = localStorage.getItem('token');
+        myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("Authorization", "Bearer " + token);
+
+        // object contains address's shipping information
+        const shippingAddress = {
+            FirstName: document.getElementById("first-name").value,
+            LastName: document.getElementById("last-name").value,
+            Email: document.getElementById("email").value,
+            Mobile_no: document.getElementById("mobile-no").value,
+            Address: document.getElementById("address").value,
+            Country: document.getElementById("country").value,
+            City: document.getElementById("country").value
+        }
+
+        const payLoad = {
+            ShippingAddress: shippingAddress,
+        }
+
+        const requestOptions = {
+            method: "PUT",
+            headers: myHeaders,
+            body: JSON.stringify(payLoad),
+        }
+
+        let status 
+        const res = await fetch("http://localhost:4001/api/users/placeorder", requestOptions)
+        .then(response => {
+            status = response.status
+            return response.json();
+        })
+        .then(data => {
+            if (status == 200) {
+                showNotification("Place Order Successfully");
+                window.location.href="http://localhost:4000/products";
+            }
+            else {
+                showNotification(data.message);
+            }
+        })
+    } */}}
+</script>
+{{end}}

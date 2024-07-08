@@ -4,21 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
-// type Cart struct {
-// 	UserId     int   `json:"user_id"`
-// 	ProductIds []int `json:"product_ids"`
-// 	Quantity   int   `json:"quantity"`
-// 	// SubTotal float32       `json:"sub_total"`
-// 	Total float32 `json:"total"`
-// 	// Shipping        float32       `json:"shipping"`
-// 	// Discount        float32       `json:"discount"`
-// 	// CouponCode      string        `json:"coupon_code"`
-// 	// PaymentMethod   string        `json:"payment_method"`
-// 	// ShippingAddress string        `json:"shipping_address"`
-// }
+type Cart struct {
+	UserId     int          `json:"user_id"`
+	CartDetail []CartDetail `json:"cart_detail"`
+	Quantity   int          `json:"quantity"`
+	SubTotal   float64      `json:"sub_total"`
+	Total      float64      `json:"total"`
+	// Shipping        float32       `json:"shipping"`
+	// Discount        float32       `json:"discount"`
+	// CouponCode      string        `json:"coupon_code"`
+	// PaymentMethod   string        `json:"payment_method"`
+	// ShippingAddress string        `json:"shipping_address"`
+}
 
 type CartDetail struct {
 	UserId    int     `json:"user_id"`
@@ -187,6 +188,7 @@ func (m *DBModel) AddProducToCart(user_id int, product Product, quantity int) er
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
+	// truy vấn để tìm thông tin số lượng sản phẩm còn tổn tại trong cơ sở dữ liệu
 	stmt := `select quantity from CartDetail where user_id = ? and product_id = ?`
 	row := m.DB.QueryRowContext(ctx, stmt, user_id, product.ID)
 
@@ -197,30 +199,34 @@ func (m *DBModel) AddProducToCart(user_id int, product Product, quantity int) er
 		}
 		err := row.Scan(&order.Quantity)
 
-		// neu khong phai do khong co hang nao
-		if err != sql.ErrNoRows {
-			// neu khong co loi
-			if err == nil {
-				if order.Quantity+quantity > product.Quantity {
-					return errors.New("vuot qua so luon hien co")
-				}
-				return m.UpdateProductToCart(user_id, product, order.Quantity+quantity)
-
-			} else { // co loi trong scan
+		// thực sự có lỗi trong scan
+		if err != nil {
+			// nếu lỗi sai không phải là do không có sản phẩm cũng loại trong giỏ hàng
+			if err != sql.ErrNoRows {
 				return err
+			} else {
+				if quantity > product.Quantity { // nếu số lượng muốn thêm vào > số lượng hiện có
+					return errors.New("số lượng thêm vào vượt quá số lượng hiện có")
+				}
 			}
+		} else {
+			// nếu có sản phẩm cùng loại trong giỏ hàng
+			fmt.Printf("so luong trong gio hang: %d\n", order.Quantity)
+			// neu khong co loi
+			if order.Quantity+quantity > product.Quantity { // nếu số lượng muốn thêm vào > số lượng hiện có
+				return errors.New("số lượng thêm vào vượt quá số lượng hiện có")
+			}
+			return m.UpdateProductToCart(user_id, product, order.Quantity+quantity)
 		}
-
-		// neu la loi do khong co hang nao thi thuc hien tiep tuc
 	}
 
+	// thực hiện truy vấn thêm sản phẩm vào giỏ hàng
 	stmt = `insert into CartDetail (user_id, product_id, quantity, price, total)
 	values (?, ?, ?, ?, ?)`
 	_, err := m.DB.ExecContext(ctx, stmt, user_id, product.ID, quantity, product.Price, float32(quantity)*product.Price)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

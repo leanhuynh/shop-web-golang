@@ -1,1 +1,1 @@
-drop_table("PlaceOrder")
+drop_table("Invoice")
