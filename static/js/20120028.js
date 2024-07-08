@@ -3,11 +3,10 @@
 // load constant value
 const PORT = 4000;
 const HOST = "http://localhost";
-const DB_DSN =
-  "root:leanhuynh236@tcp(localhost:3306)/go_stripe?parseTime=true&tls=false";
+const DB_DSN = "";
 const SMTP_HOST = "smtp.mailtrap.io";
-const SMTP_USERNAME = "dc8f045580cde0";
-const SMTP_PASSWORD = "7810f125ae27ba";
+const SMTP_USERNAME = "";
+const SMTP_PASSWORD = "";
 const SMTP_PORT = 587;
 const SECRET_KEY = "secret";
 const SESSION_KEY = "session";

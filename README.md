@@ -46,6 +46,8 @@ go install ./...
 soda migrate up
 ```
 
+- Cần thêm thông tin tài khoản mailtrap.io và dsn cho database trước khi khởi chạy (quan trọng)
+
 **Hình ảnh của WEB-SHOPPING**
 
 - Giao diện trang chủ
