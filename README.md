@@ -49,13 +49,13 @@ soda migrate up
 **Hình ảnh của WEB-SHOPPING**
 
 - Giao diện trang chủ
-  <img src="./trang_chu.png" width="" height="800">
+  <img src="./trang_chu.png" width="" height="600">
 
 - chức năng thêm sản phẩm
-  <img src="./them_san_pahm.png" width="" height="800">
+  <img src="./them_sp_vao_gio_hang.png" width="" height="600">
 
 - chức năng xem giỏ hàng
-  <img src="./xem_gio_hang.png" width="" height="800">
+  <img src="./xem_gio_hang.png" width="" height="600">
 
 - chức năng xem thông tin đơn hàng
-  <img src="./thong_tin_don_hang.png" width="" height="800">
+  <img src="./thong_tin_don_hang.png" width="" height="600">
