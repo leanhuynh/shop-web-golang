@@ -59,3 +59,12 @@ soda migrate up
 
 - chức năng xem thông tin đơn hàng
   <img src="./thong_tin_don_hang.png" width="" height="600">
+
+- chức năng quên mật khẩu
+  <img src="./quen_mk.png" width="" height="600">
+
+- chức năng gửi email reset mật khẩu
+  <img src="./gui_email_reset_mk.png" width="" height="600">
+
+- chức năng cập nhật mật khẩu
+  <img src="./cap_nhat_mk.png" width="" height="600">
