@@ -191,6 +191,23 @@ func (m *DBModel) AddProducToCart(user_id int, product Product, quantity int) er
 	// truy vấn để tìm thông tin số lượng sản phẩm còn tổn tại trong cơ sở dữ liệu
 	stmt := `select quantity from CartDetail where user_id = ? and product_id = ?`
 	row := m.DB.QueryRowContext(ctx, stmt, user_id, product.ID)
+	// var orderProduct Product
+
+	// // lấy số lượng trong kho của sản phẩm
+	// row := m.DB.QueryRowContext(ctx, `select quantity from product where id = ?`, product.ID)
+
+	// // convert product
+	// err := row.Scan(&orderProduct.Quantity)
+
+	// // nếu có lỗi, trả về
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // kiểm tra nếu số lượng yêu cầu có vượt quá số lượng trong kho hay không
+	// if orderProduct.Quantity < quantity {
+	// 	return errors.New("số lượng thêm vào vượt quá số lượng hiện có")
+	// }
 
 	if row != nil {
 		// scan data
@@ -224,9 +241,24 @@ func (m *DBModel) AddProducToCart(user_id int, product Product, quantity int) er
 	stmt = `insert into CartDetail (user_id, product_id, quantity, price, total)
 	values (?, ?, ?, ?, ?)`
 	_, err := m.DB.ExecContext(ctx, stmt, user_id, product.ID, quantity, product.Price, float32(quantity)*product.Price)
+
+	// kiểm tra nếu có lỗi xảy ra, trả về error
 	if err != nil {
 		return err
 	}
+
+	// // cập nhật lại số lượng trong kho của sản phẩm
+	// _, err = m.DB.ExecContext(ctx, `
+	// 	update product set quantity = ?
+	// 	where id = ?
+	// `, orderProduct.Quantity-quantity, product.ID)
+
+	// // nếu có lỗi xảy ra, trả về error
+	// if err != nil {
+	// 	return err
+	// }
+
+	// thêm sản phẩm thành công vào giỏ hàng, trả về nil
 	return nil
 }
 

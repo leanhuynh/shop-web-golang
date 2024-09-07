@@ -3,10 +3,11 @@
 // load constant value
 const PORT = 4000;
 const HOST = "http://localhost";
-const DB_DSN = "";
+const DB_DSN =
+  "root:leanhuynh236@tcp(localhost:3306)/go_stripe?parseTime=true&tls=false";
 const SMTP_HOST = "smtp.mailtrap.io";
-const SMTP_USERNAME = "";
-const SMTP_PASSWORD = "";
+const SMTP_USERNAME = "a486f2e0236b7c";
+const SMTP_PASSWORD = "72825a9ab13788";
 const SMTP_PORT = 587;
 const SECRET_KEY = "secret";
 const SESSION_KEY = "session";
@@ -291,4 +292,11 @@ function placeOrder() {
       }
     });
   });
+}
+
+// hàm tìm kiểm sản phẩm theo keyword
+function search(keyword) {
+  if (keyword !== "" && keyword !== undefined) {
+    location.href = `${HOST}:${PORT}/product?search=${keyword}`;
+  }
 }

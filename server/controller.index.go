@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"myapp/internal/models"
 	"net/http"
@@ -629,8 +628,24 @@ func (app *application) ProfilePage(w http.ResponseWriter, r *http.Request) {
 		count++
 	}
 
+	// lấy danh sách shippingaddress của người dùng
+	shippingAddress, err := app.DB.GetAddressForUser(user.ID)
+	if err != nil {
+		app.errorLog.Println(err.Error())
+		panic(err)
+	}
+
+	// thêm số thứ tự cho address
+	count = 1
+	for index := 0; index < len(shippingAddress); index++ {
+		shippingAddress[index].No = count
+		count++
+	}
+
 	data := make(map[string]interface{})
 	data["BoughtProducts"] = boughtProducts
+	data["ShippingAddresses"] = shippingAddress
+	data["Profile"] = user
 
 	// render profile page
 	if err := app.renderTemplate(w, r, "profile", &templateData{
@@ -747,7 +762,7 @@ func (app *application) Order(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(cartDetail)
+	// fmt.Println(cartDetail)
 
 	// xử lý truy vấn đặt hàng
 	if data.AddressId == "0" { // nếu dặt ở địa chỉ khác

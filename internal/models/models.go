@@ -37,6 +37,7 @@ type User struct {
 }
 
 type Address struct {
+	No        int    `json:"no"`
 	ID        string `json:"id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -371,8 +372,41 @@ func (m *DBModel) InsertOrder(userId int, cart []CartDetail, firstName string, l
 	}
 
 	// thao tác được thực hiện --> xóa tất cả sản phẩm trong giỏ hàng
-	m.RemoveCart(userId)
+	err = m.RemoveCart(userId)
+	if err != nil {
+		return false, err
+	}
+
+	// thao tác được thực hiện --> cập nhật số lượng hiện có
+	err = m.UpdateQuantityofProducts(cart)
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
+}
+
+// hàm cập nhật số lượng sản phẩm trong giỏ hàng theo danh sách
+func (m *DBModel) UpdateQuantityofProducts(cart []CartDetail) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	for index := 0; index < len(cart); index++ {
+		// thực thi câu truy vấn cập nhật số lượng sản phẩm trong kho
+		_, err := m.DB.ExecContext(ctx, `
+			update product
+			set quantity = quantity - ?
+			where id = ?
+		`, cart[index].Quantity, cart[index].ProductId)
+
+		// nếu có lỗi xảy ra trong quá trình thực thi
+		if err != nil {
+			return err
+		}
+	}
+
+	// nếu không có lỗi xảy ra
+	return nil
 }
 
 func (m *DBModel) GetAllTags() ([]Tag, error) {
